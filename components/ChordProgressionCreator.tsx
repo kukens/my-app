@@ -24,8 +24,6 @@ export default function ChordProgressionCreator() {
 
   return (
     <div className="p-6 max-w-xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">Chord Progression Creator</h1>
-
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block mb-1 font-medium">Beats per Bar</label>
