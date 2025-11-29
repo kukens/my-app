@@ -1,14 +1,18 @@
 export interface TrackData {
+  id: string;
+  name: string;
   tempo: number;
   loop: boolean;
   bars: Bar[];
 }
 
-interface Bar {
+export interface Bar {
   chords: string[];
 }
 
 export const TRACK_DATA: TrackData = { 
+  id: crypto.randomUUID(),
+  name: "Crazy chords",
   tempo: 80,
   loop: true,  
   bars: [

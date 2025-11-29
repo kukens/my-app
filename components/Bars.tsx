@@ -1,23 +1,60 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useChord } from './ChordContext';
 import styles from './Bars.module.css';
 
-import { TRACK_DATA } from '@/data/track1';
 import { TrackData } from '@/data/track1';
 
-export default function Bars() {
- 
+interface BarProps {
+    id: string
+}
+
+export default function Bars(props: BarProps) {
+
     const { evaluatedChord } = useChord();
 
-    const trackDataRef = useRef<TrackData>(TRACK_DATA);
+    const [trackData, setTrackData] = useState<TrackData | null>(null)
+
     const beatsElementsRef = useRef<HTMLDivElement[]>([]);
     const barsElementsRef = useRef<HTMLDivElement[]>([]);
     const evaluatedChordRef = useRef(evaluatedChord);
     const evaluatedChordVerionsRef = useRef(evaluatedChord?.version);
-    
+
     const indexRef = useRef(0);
+
+    useEffect(() => {
+        const trackDataFromLocalStorage = JSON.parse(localStorage.getItem(`trackData-${props.id}`) ?? "") as TrackData;
+        setTrackData(trackDataFromLocalStorage)
+    }, []);
+
+    useEffect(() => {
+        if (trackData != null) {
+            const timePerBeat = 60 / trackData.tempo * 1000;
+            const id = setInterval(() => {
+                tick(timePerBeat * 4)
+            },
+                timePerBeat);
+
+            return () => clearInterval(id);
+        }
+    }, [trackData]);
+
+    useEffect(() => {
+        evaluatedChordRef.current = evaluatedChord;
+
+        const beats = beatsElementsRef.current;
+        const currentIndex = indexRef.current - 1 < 0 ? beats.length - 1 : indexRef.current - 1;
+
+        if (evaluatedChordVerionsRef.current != evaluatedChordRef.current?.version) {
+            if (beats[currentIndex].dataset.chord == evaluatedChordRef.current?.value) {
+                beats[currentIndex].classList.add("bg-green-800")
+            }
+        }
+
+        evaluatedChordVerionsRef.current = evaluatedChordRef.current?.version;
+
+    }, [evaluatedChord]);
 
     const registerBeats = (el: HTMLDivElement | null) => {
         if (el && !beatsElementsRef.current.includes(el)) {
@@ -32,6 +69,7 @@ export default function Bars() {
     };
 
     function tick(timePerBar: number) {
+
 
         const beats = beatsElementsRef.current;
         const bars = barsElementsRef.current;
@@ -52,54 +90,14 @@ export default function Bars() {
         beats[currentIndex].classList.add(styles.active);
         beats[currentIndex].classList.remove("bg-green-800");
         beats[previousBeat].classList.remove(styles.active);
-        
 
         indexRef.current = (currentIndex + 1) % beatsLength
-
-        console.log(indexRef.current + ' ' + Date.now());
     }
-
-    useEffect(() => {
-        console.log('bar efftc');
-                console.log(Date.now());
-        const timePerBeat = 60 / TRACK_DATA.tempo * 1000;
-        const id = setInterval(() => {
-            tick(timePerBeat * 4)
-        },
-            timePerBeat);
-
-        return () => clearInterval(id);
-    }, []);
-
-    useEffect(() => {
-        evaluatedChordRef.current = evaluatedChord;
-
-        const beats = beatsElementsRef.current;
-        const currentIndex = indexRef.current - 1 < 0? beats.length - 1 : indexRef.current  - 1;
-
-      //  console.log(Date.now() + ' ' + evaluatedChord?.value + ' ' + evaluatedChord?.version)
-        console.log('evaluated index: ' +  currentIndex)
-
-        if (evaluatedChordVerionsRef.current == evaluatedChordRef.current?.version) {
-             console.log("chord version DID NOT chang");
-        }
-        else {
-            console.log("chord version changed");
-              console.log(evaluatedChordRef.current?.value + " " + evaluatedChordRef.current?.version);
-
-            if (beats[currentIndex].dataset.chord == evaluatedChordRef.current?.value) {
-                beats[currentIndex].classList.add("bg-green-800")
-            }
-        }
-
-        evaluatedChordVerionsRef.current = evaluatedChordRef.current?.version;
-
-    }, [evaluatedChord]);
 
     return (
         <div className="bars relative overflow-hidden h-96">
             <div className="slider-verticalx">
-                {TRACK_DATA.bars.map((bar, i) => (
+                {trackData?.bars.map((bar, i) => (
                     <div key={i} className="bar-wrapper flex items-center">
                         <div ref={registerBars} className={`${styles['bar']} grid grid-cols-4 gap-1 w-full p-1`}>
                             {bar.chords.map((chord, j) => (

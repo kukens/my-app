@@ -20,8 +20,6 @@ export default function AudioAnalyzer() {
     const [isToggled, setIsToggled] = useState(false);
     const [isEnableDiagnostics, setEnableDiagnostics] = useState(false);
 
-
-
     useEffect(() => {
         console.log("AudioAnalyzer effect");
         const service = new AudioService();
@@ -49,8 +47,6 @@ export default function AudioAnalyzer() {
 
         return () => service.stopAnalysis();
     }, [isToggled]);
-
-
 
     const handleToggle = () => {
         setIsToggled(prevState => !prevState);

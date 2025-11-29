@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      konsta:
+        specifier: ^5.0.5
+        version: 5.0.5
       meyda:
         specifier: ^5.6.3
         version: 5.6.3
@@ -1424,6 +1427,10 @@ packages:
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
+  konsta@5.0.5:
+    resolution: {integrity: sha512-mkygFSKYXZtQraALLM/24rtSQxf8Hbd8IUgNchztS+9gTad/VvZYn0AnBChHHxESo4zHXvt049uvdZtmfE4F9Q==}
+    engines: {node: '>= 4.7.0'}
+
   language-subtag-registry@0.3.23:
     resolution: {integrity: sha512-0K65Lea881pHotoGEa5gDlMxt3pctLi2RplBb7Ezh4rRdLEOtgi7n4EwK9lamnUCkKBqaeKRVebTq6BAxSkpXQ==}
 
@@ -1873,6 +1880,9 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
+
+  tailwind-merge@3.4.0:
+    resolution: {integrity: sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==}
 
   tailwindcss@4.1.16:
     resolution: {integrity: sha512-pONL5awpaQX4LN5eiv7moSiSPd/DLDzKVRJz8Q9PgzmAdd1R4307GQS2ZpfiN7ZmekdQrfhZZiSE5jkLR4WNaA==}
@@ -3500,6 +3510,10 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
+  konsta@5.0.5:
+    dependencies:
+      tailwind-merge: 3.4.0
+
   language-subtag-registry@0.3.23: {}
 
   language-tags@1.0.9:
@@ -4004,6 +4018,8 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  tailwind-merge@3.4.0: {}
 
   tailwindcss@4.1.16: {}
 
