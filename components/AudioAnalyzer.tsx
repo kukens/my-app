@@ -16,13 +16,21 @@ export default function AudioAnalyzer() {
     const { setEvaluatedChord } = useChord();
 
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const serref = useRef<AudioService>(null);
+
 
     const [isToggled, setIsToggled] = useState(false);
     const [isEnableDiagnostics, setEnableDiagnostics] = useState(false);
 
     useEffect(() => {
-        console.log("AudioAnalyzer effect");
+
+        if (isToggled)
+        {
+                    console.log("AudioAnalyzer effect");
+
         const service = new AudioService();
+
+        console.log('isToggled: ' + isToggled)
 
         service.initMicrophone().then(() => {
             service.startAnalysis((features) => {
@@ -39,13 +47,14 @@ export default function AudioAnalyzer() {
                         version: crypto.randomUUID(),
                     });
                 }
-                if (!isToggled) {
-                    service.stopAnalysis()
-                }
             });
+        
         });
-
-        return () => service.stopAnalysis();
+        
+        return () => {
+            service.stopAnalysis();
+        }
+    }
     }, [isToggled]);
 
     const handleToggle = () => {

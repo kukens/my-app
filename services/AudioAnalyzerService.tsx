@@ -17,6 +17,8 @@ export class AudioService {
     private analyzer: MeydaAnalyzer | null = null;
 
     constructor() {
+   
+        console.log('starting audio ctx');
         this.AudioContext = new AudioContext();
     }
 
@@ -44,7 +46,9 @@ export class AudioService {
     }
 
     public stopAnalysis() {
+        console.log('stoping analyzer, closing audio context')
         this.analyzer?.stop();
+        this.AudioContext.close();
     }
 
     private anylyzeAudio(amplitudeSpectrum: Float32Array): AnalysisResult {
@@ -192,4 +196,5 @@ export class AudioService {
         return sortedChords
     }
 
+    
 }
