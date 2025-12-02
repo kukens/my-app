@@ -33,17 +33,17 @@ export default function AudioAnalyzer() {
         console.log('isToggled: ' + isToggled)
 
         service.initMicrophone().then(() => {
-            service.startAnalysis((features) => {
+            service.startAnalysis((analyzisResult) => {
                 if (isEnableDiagnostics) {
-                    if (features.audioData) setAudioData(features.audioData);
-                    if (features.hitsData) sethitsData(features.hitsData);
-                    if (features.evaluatedChords.length > 0) {
-                        setEvaluatedChords(features.evaluatedChords);
+                    if (analyzisResult.audioData) setAudioData(analyzisResult.audioData);
+                    if (analyzisResult.hitsData) sethitsData(analyzisResult.hitsData);
+                    if (analyzisResult.evaluatedChords.length > 0) {
+                        setEvaluatedChords(analyzisResult.evaluatedChords);
                     }
                 }
-                if (features.evaluatedChords.length > 0) {
+                if (analyzisResult.evaluatedChords.length > 0) {
                     setEvaluatedChord({
-                        value: features.evaluatedChords[0].chordName,
+                        value: analyzisResult.evaluatedChords[0].chordName,
                         version: crypto.randomUUID(),
                     });
                 }
