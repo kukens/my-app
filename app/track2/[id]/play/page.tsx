@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams } from 'next/navigation';
-import AudioAnalyzer from '@/components/AudioAnalyzer';
+import AudioAnalyzerWorker from '@/components/AudioAnalyzerWorker';
 import Bars from '@/components/Bars';
 import { ChordProvider } from '@/components/ChordContext';
 import { Button } from 'konsta/react';
@@ -19,7 +19,7 @@ export default function Home() {
 
         <ChordProvider>
           <Bars id={id as string} />
-          <AudioAnalyzer />
+          <AudioAnalyzerWorker />
         </ChordProvider>
       </main>
   );
