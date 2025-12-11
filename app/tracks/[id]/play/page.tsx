@@ -2,10 +2,11 @@
 
 import { useParams } from 'next/navigation';
 import AudioAnalyzer from '@/components/AudioAnalyzer';
-import Bars from '@/components/Bars';
+import TrackPlayer from '@/components/TrackPlayer';
 import { ChordProvider } from '@/components/ChordContext';
-import { Button } from 'konsta/react';
+import { Button } from "flowbite-react";
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Home() {
 
@@ -14,13 +15,13 @@ export default function Home() {
   const { id } = params;
 
   return (
-      <main className="">
-        <Button small rounded outline component="span" onClick={()=>{router.back()}}> ← Go Back</Button>
+      <>
+       <Link key="back" className="m-5" href={`/tracks/${id}`}> <Button className="m-2" as="span" color="teal" pill> ← Go Back</Button></Link> 
 
         <ChordProvider>
-          <Bars id={id as string} />
+          <TrackPlayer id={id as string} />
           <AudioAnalyzer />
         </ChordProvider>
-      </main>
+      </>
   );
 }

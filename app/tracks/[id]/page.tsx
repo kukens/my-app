@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { TrackData } from '@/data/track1';
+import { TrackData } from '@/types/TrackData';
 import Link from 'next/link';
-import { Button } from 'konsta/react';
+import { Button } from "flowbite-react";
 import { useRouter } from 'next/navigation';
 
 export default function Track() {
@@ -20,10 +20,13 @@ export default function Track() {
     }, []);
 
     return (
-        <div>
-            <Button small rounded outline component="span" onClick={()=>{router.back()}}> ← Go Back</Button>
-            <h1>Track {trackData?.name} </h1>
-            <Link className="m-5" href={`/track/${trackData?.id}/play`}><Button small rounded outline component="span">Play</Button></Link>
-        </div>
+        <>
+           <Link key="back" className="m-5" href={`/`}> <Button as="span" color="teal" pill> ← Go Back</Button></Link> 
+
+
+            <h2 className="dark:text-white text-center">{trackData?.name}</h2>
+
+            <Link className="m-5" href={`/tracks/${trackData?.id}/play`}><Button as="span" color="teal" pill >Play</Button></Link>
+        </>
     );
 }

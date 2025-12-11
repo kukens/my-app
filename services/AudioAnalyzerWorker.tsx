@@ -1,201 +1,96 @@
 import Meyda, { MeydaFeaturesObject } from 'meyda';
 
-import { getTolerance } from '@/lib/AudioAnalyzerUtilities';
+import { AudioAnalyzerService } from '@/services/AudioAnalyzerService';
+import { AnalysisResult } from '@/services/AudioAnalyzerService.types';
 
-import { AnalysisResult, SpectrumEntry, MatchedNoteData, EvaluatedChord } from '@/services/AudioAnalyzerService.types';
-
-import { CHORDS_DATA } from '@/data/chordsData';
-import { CHARMONICS_DATA } from '@/data/charmonicsData';
-import { MeydaAnalyzer } from 'meyda/dist/esm/meyda-wa';
-
-
-
-
-export type WorkerIn =
-  | {
-      type: "analyze";
-      samples: Float32Array;
-      sampleRate: number;
+export type AudioAnalyzerWorkerIn =
+    {
+        type: "init";
+        windowSize: number
     }
-  | { type: "stop" };
+    | {
+        type: "push";
+        samples: Float32Array;
+        sampleRate: number;
+    };
 
-export type WorkerOut = {
-  type: "spectrum";
-  analysisResult: AnalysisResult;
+export type AudioAnalyzerWorkerOut = {
+    type: "spectrum";
+    analysisResult: AnalysisResult;
 };
 
-class Analyzer{
 
-     public anylyzeAudio(amplitudeSpectrum: Float32Array, sampleRate:number): AnalysisResult {
-            const nyquist = sampleRate / 2;
-            const freqStep = nyquist / amplitudeSpectrum.length;
-    
-            const startBin = Math.floor(50 / freqStep);
-            const endBin = Math.ceil(10000 / freqStep);
-            const visibleBins = amplitudeSpectrum.slice(startBin, endBin);
-            const binCount = visibleBins.length;
-    
-            const freqsWithMagnitudes: SpectrumEntry[] = [];
-    
-            const mean = visibleBins.reduce((a, b) => a + b, 0) / binCount;
-    
-            for (let i = 0; i < binCount; i++) {
-                freqsWithMagnitudes.push({ freq: (startBin + i) * freqStep, magnitude: visibleBins[i] });
-            }
-    
-            const peaks: SpectrumEntry[] = [];
-    
-            for (let i = 1; i < freqsWithMagnitudes.length - 1; ++i) {
-                if (
-                    freqsWithMagnitudes[i - 1].magnitude < freqsWithMagnitudes[i].magnitude && freqsWithMagnitudes[i].magnitude > freqsWithMagnitudes[i + 1].magnitude)
-                    peaks.push(freqsWithMagnitudes[i])
-            }
-    
-            const aboveMean = peaks.filter(x => x.magnitude > mean);
-            const rms = Math.sqrt(aboveMean.reduce((sum, val) => sum + val.magnitude * val.magnitude, 0) / aboveMean.length);
-    
-            const analyzedAudio: AnalysisResult = {
-                audioData: { rms: rms, mean: mean, peaks: peaks },
-                hitsData: null,
-                evaluatedChords: []
-            };
-    
-            if (!aboveMean.some(x => x.magnitude > 10)) {
-                return analyzedAudio;
-            }
-    
-            const matchedNotes = this.matchFrequencies(aboveMean)
-    
-            const rmsScore = Math.sqrt(matchedNotes.reduce((sum, val) => sum + val.score * val.score, 0) / matchedNotes.length);
-            const meanScore = matchedNotes.reduce((a, b) => a + b.score, 0) / matchedNotes.length;
-            const rmsFrequencyHits = Math.sqrt(matchedNotes.reduce((sum, val) => sum + val.frequencies.length * val.frequencies.length, 0) / matchedNotes.length);
-            const meanFrequencyHits = matchedNotes.reduce((a, b) => a + b.frequencies.length, 0) / matchedNotes.length;
-    
-            const filteredMatchedNotes = matchedNotes.filter(x => x.score > meanScore && x.frequencies.length > 4).sort((a, b) => b.score - a.score);
-    
-            const familyScores: { [family: string]: number; } = {};
-    
-            filteredMatchedNotes.forEach(x => {
-                const currentFamilyScore = familyScores[x.family];
-                if (currentFamilyScore == null) {
-                    familyScores[x.family] = x.score;
-                }
-                else {
-                    familyScores[x.family] = currentFamilyScore + x.score
-                }
-            });
-    
-            const sortedFaimilyScores = Object.entries(familyScores).sort((a, b) => b[1] - a[1]);
-            const evaluatedChords = this.EvaluateChord(sortedFaimilyScores)
-    
-            analyzedAudio.evaluatedChords = evaluatedChords;
-            analyzedAudio.hitsData = {
-                meanScore: meanScore,
-                rmsScore: rmsScore,
-                meanFrequencyHits: meanFrequencyHits,
-                rmsFrequencyHits: rmsFrequencyHits,
-                familyScores: sortedFaimilyScores
-            }
-    
-            return analyzedAudio;
-        }
-    
-        private matchFrequencies(inputFrequencies: SpectrumEntry[]): MatchedNoteData[] {
-            const matchedNotes: MatchedNoteData[] = [];
-    
-            CHARMONICS_DATA.forEach(harmonicDataElement => {
-                const matchedMagnitudes: number[] = [];
-                const matchedHarmonics = harmonicDataElement.freqs.filter(harmFreq =>
-    
-                    inputFrequencies.some(() => {
-                        const tol = getTolerance(harmFreq);
-    
-                        // filter elements by tolerance (if tol is 10 then it tolerates 10 downwards and upwards)
-                        const filtered = inputFrequencies.filter(inputFreq => (harmFreq - inputFreq.freq <= tol && inputFreq.freq - harmFreq < tol));
-    
-                        if (filtered.length > 0) {
-    
-                            const magnitude = filtered.filter(x => x.freq)[0].magnitude;
-    
-                            matchedMagnitudes.push(magnitude);
-                            return true;
-                        }
-    
-                        return false
-                    })
-                );
-    
-                if (matchedHarmonics.length > 0) {
-                    matchedNotes.push(
-                        {
-                            note: harmonicDataElement.note,
-                            family: harmonicDataElement.family,
-                            score: matchedMagnitudes.reduce((a, b) => a + b),
-                            magnitudes: matchedMagnitudes,
-                            frequencies: matchedHarmonics
-                        });
-                }
-            });
-    
-            return matchedNotes;
-        }
-    
-        private EvaluateChord(familyScores: [string, number][]): EvaluatedChord[] {
-    
-            const chords: EvaluatedChord[] = [];
-    
-            CHORDS_DATA.forEach(chordInfo => {
-                let finalScore = 0;
-    
-                if (chordInfo.notes.every(note => {
-                    const matchedNoteFamily = familyScores.filter(x => x[0] == note);
-                    const isMatch = matchedNoteFamily?.length == 1;
-    
-                    if (isMatch) {
-                        finalScore += matchedNoteFamily[0][1];
-                    }
-                    return isMatch;
-                })) {
-                    const matchedChordInfo: EvaluatedChord = {
-                        chordName: chordInfo.chord,
-                        score: finalScore,
-                        notes: chordInfo.notes
-                    }
-    
-                    chords.push(matchedChordInfo)
-                }
-            });
-    
-            const sortedChords = Object.entries(chords).sort((a, b) => b[1].score - a[1].score).map(x => x[1]);
-    
-            return sortedChords
-        }
-}
+const analyzer = new AudioAnalyzerService()
 
+let windowSize = 4096;
+let hopSize = 1024; 
+let ringBufferSize = windowSize * 4;
 
-const BUFFER_SIZE = 4096;
-const analyzer = new Analyzer()
+let ringBuffer = new Float32Array(ringBufferSize);
+let writeIndex = 0;
+let availableSamples = 0;
 
-self.onmessage = (e: MessageEvent<WorkerIn>) => {
-  if (e.data.type === "analyze") {
+console.log('setting default window size:' + windowSize)
 
-    const { samples, sampleRate } = e.data;
-    Meyda.bufferSize = sampleRate;
-     Meyda.bufferSize = BUFFER_SIZE;
-    const spectrum = Meyda.extract(["amplitudeSpectrum"], samples) as MeydaFeaturesObject;
-
-   const analysisResult = analyzer.anylyzeAudio(spectrum.amplitudeSpectrum, sampleRate );
-   // console.log(analysisResult.evaluatedChords)
-      self.postMessage({
-        type: "spectrum",
-        analysisResult,
-      } satisfies WorkerOut);
+function pushSamples(input: Float32Array) {
+    for (let i = 0; i < input.length; i++) {
+        ringBuffer[writeIndex] = input[i];
+        writeIndex = (writeIndex + 1) % ringBufferSize;
     }
 
-
-  if (e.data.type === "stop") {
-    self.close();
-  }
-
+    availableSamples += input.length;
 }
 
+function readWindow(): Float32Array {
+    const start =
+        (writeIndex - availableSamples + ringBufferSize) %
+        ringBufferSize;
+
+    const window = new Float32Array(windowSize);
+
+    for (let i = 0; i < windowSize; i++) {
+        window[i] =
+            ringBuffer[(start + i) % ringBufferSize];
+    }
+
+    return window;
+}
+
+
+self.onmessage = (e: MessageEvent<AudioAnalyzerWorkerIn>) => {
+
+    if (e.data.type === "init" && windowSize) {
+        windowSize = e.data.windowSize;
+        hopSize = windowSize / 4
+        ringBufferSize = windowSize * 4;
+
+        ringBuffer = new Float32Array(ringBufferSize);
+        writeIndex = 0;
+        availableSamples = 0;
+
+        console.log('setting window size:' + e.data.windowSize)
+    }
+    else if (e.data.type === "push") {
+        const { samples, sampleRate } = e.data;
+
+        pushSamples(samples);
+
+        while (availableSamples >= windowSize) {
+            const window = readWindow();
+
+            Meyda.sampleRate = sampleRate;
+            Meyda.bufferSize = windowSize;
+
+            const spectrum = Meyda.extract(["amplitudeSpectrum"], window) as MeydaFeaturesObject;
+
+            const analysisResult = analyzer.anylyzeAudio(spectrum.amplitudeSpectrum, sampleRate);
+
+            self.postMessage({
+                type: "spectrum",
+                analysisResult,
+            } satisfies AudioAnalyzerWorkerOut);
+
+            availableSamples -= hopSize;
+        }
+    }
+};

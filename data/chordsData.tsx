@@ -3,6 +3,7 @@ export interface ChordsData {
   notes: string[];
 }
 
+
 export const CHORDS_DATA: ChordsData[] = [
   { "chord": "C", "notes": ["C", "E", "G"] },
   { "chord": "Cm", "notes": ["C", "D#", "G"] },

@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useChord } from './ChordContext';
 import styles from './Bars.module.css';
 
-import { TrackData } from '@/data/track1';
+import { TrackData } from '@/types/TrackData';
 
 interface BarProps {
     id: string
 }
 
-export default function Bars(props: BarProps) {
+export default function TrackPlayer(props: BarProps) {
 
     const { evaluatedChord } = useChord();
 
@@ -41,6 +41,7 @@ export default function Bars(props: BarProps) {
     }, [trackData]);
 
     useEffect(() => {
+        console.log('chord changed')
         evaluatedChordRef.current = evaluatedChord;
 
         const beats = beatsElementsRef.current;

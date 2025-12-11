@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { AudioService } from '@/services/AudioAnalyzerService';
-import { HitsData, CurrentAudioData, EvaluatedChord } from '@/services/AudioAnalyzerService.types';
+import { HitsData, CurrentAudioData, EvaluatedChord, AnalysisResult } from '@/services/AudioAnalyzerService.types';
 import { getTolerance } from '@/lib/AudioAnalyzerUtilities';
 import { useChord } from "./ChordContext";
-
-import { ChordValue } from "./ChordContext";
+import type { AudioAnalyzerWorkerIn, AudioAnalyzerWorkerOut } from "@/services/AudioAnalyzerWorker";
+import { Button } from "flowbite-react";
 
 export default function AudioAnalyzer() {
 
@@ -15,75 +14,135 @@ export default function AudioAnalyzer() {
     const [evaluatedChords, setEvaluatedChords] = useState<EvaluatedChord[]>([]);
     const { setEvaluatedChord } = useChord();
 
-    const containerRef = useRef<HTMLDivElement | null>(null);
-    const serref = useRef<AudioService>(null);
+    const workerRef = useRef<Worker>(null);
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const processorRef = useRef<ScriptProcessorNode | null>(null);
+
+    const windowSize = 4096;
+
+    const [isRecording, setIsRecording] = useState(true);
+    const [diagnosticsEnabled, setDiagnosticsEnabled] = useState(false);
 
 
-    const [isToggled, setIsToggled] = useState(false);
-    const [isEnableDiagnostics, setEnableDiagnostics] = useState(false);
+    useEffect(() => {
+       
+            return () => stopRecording();
+        }, []);
 
     useEffect(() => {
 
-        if (isToggled)
-        {
-                    console.log("AudioAnalyzer effect");
+        console.log("AudioAnalyzer effect toggle" + isRecording);
 
-        const service = new AudioService();
+        if (isRecording) {
 
-        console.log('isToggled: ' + isToggled)
+            console.log("Creating web worker");
+            workerRef.current = new Worker(
+                new URL("../services/AudioAnalyzerWorker.tsx", import.meta.url),
+                { type: "module" }
+            );
+            startRecording();
+            workerRef.current.onmessage = (e: MessageEvent<AudioAnalyzerWorkerOut>) => {
 
-        service.initMicrophone().then(() => {
-            service.startAnalysis((analyzisResult) => {
-                if (isEnableDiagnostics) {
-                    if (analyzisResult.audioData) setAudioData(analyzisResult.audioData);
-                    if (analyzisResult.hitsData) sethitsData(analyzisResult.hitsData);
+                if (e.data.type === "spectrum") {
+                    const analyzisResult = e.data.analysisResult;
+                    if (diagnosticsEnabled) {
+                        if (analyzisResult.audioData) setAudioData(analyzisResult.audioData);
+                        if (analyzisResult.hitsData) sethitsData(analyzisResult.hitsData);
+                        if (analyzisResult.evaluatedChords.length > 0) {
+                            setEvaluatedChords(analyzisResult.evaluatedChords);
+                        }
+                    }
                     if (analyzisResult.evaluatedChords.length > 0) {
-                        setEvaluatedChords(analyzisResult.evaluatedChords);
+                        setEvaluatedChord({
+                            value: analyzisResult.evaluatedChords[0].chordName,
+                            version: crypto.randomUUID(),
+                        });
                     }
                 }
-                if (analyzisResult.evaluatedChords.length > 0) {
-                    setEvaluatedChord({
-                        value: analyzisResult.evaluatedChords[0].chordName,
-                        version: crypto.randomUUID(),
-                    });
-                }
-            });
-        
-        });
-        
-        return () => {
-            service.stopAnalysis();
+            };
         }
-    }
-    }, [isToggled]);
+
+    }, [isRecording]);
 
     const handleToggle = () => {
-        setIsToggled(prevState => !prevState);
-        if (containerRef.current?.classList.contains("started")) {
-            containerRef.current?.classList.remove("started");
+        if (isRecording) {
+            stopRecording();
         }
         else {
-            containerRef.current?.classList.add("started");
+            startRecording();
         }
     };
 
     const enableDiagnostics = () => {
-        setEnableDiagnostics(prevState => !prevState);
+        setDiagnosticsEnabled(prevState => !prevState);
     };
 
-    return <div ref={containerRef} className="w-full">
+    const startRecording = async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+        });
 
-        <button className="bg-blue-500 m-2hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={handleToggle}>
-            {isToggled ? 'STOP' : 'START'}
-        </button>
+        const audioCtx = new AudioContext();
+        audioCtxRef.current = audioCtx;
 
-        <button className="bg-blue-500 m-2 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={enableDiagnostics}>
-            {isEnableDiagnostics ? 'DIAGNOSTICS OFF' : 'DIAGNOSTICS ON'}
-        </button>
+        const source = audioCtx.createMediaStreamSource(stream);
+        const processor = audioCtx.createScriptProcessor(windowSize, 1, 1);
+      
+        processorRef.current = processor;
+
+        workerRef.current?.postMessage(
+            {
+                type: "init",
+                windowSize: windowSize,
+            } as AudioAnalyzerWorkerIn
+        );
+
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+
+        processor.onaudioprocess = (e) => {
+            const samples = e.inputBuffer.getChannelData(0);
+
+            workerRef.current?.postMessage(
+                {
+                    type: "push",
+                    samples,
+                    sampleRate: audioCtx.sampleRate,
+                } as AudioAnalyzerWorkerIn,
+                [samples.buffer]
+            );
+        };
+
+        setIsRecording(true);
+    };
+
+    const stopRecording = () => {
+     
+        if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+             processorRef.current?.disconnect();
+             audioCtxRef.current.close()
+             workerRef.current?.terminate();
+
+            console.log('Closing audio ctx and disposing web worker');
+        };
+
+        setIsRecording(false);
+    };
+
+
+    return <div className="w-full">
+
+        <Button className="m-2" as="span" color="teal" pill onClick={handleToggle}>
+            {isRecording ? 'STOP' : 'START'}
+        </Button>
+
+        <Button className="m-2" as="span" color="teal" pill onClick={enableDiagnostics}>
+            {diagnosticsEnabled ? 'DIAGNOSTICS OFF' : 'DIAGNOSTICS ON'}
+        </Button>
 
         <br />  <br />
 
-        {isEnableDiagnostics &&
+        {diagnosticsEnabled &&
             <div><p>mean: {audioData?.mean.toFixed(1)}</p>
                 <p>rms: {audioData?.rms.toFixed(1)}</p>
                 <br />

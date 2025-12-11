@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from "react";
-import { TrackData, Bar } from "@/data/track1";
+import { TrackData, Bar } from "@/types/TrackData";
 
 export default function ChordProgressionCreator() {
   const [trackName, setTrackName] = useState("");
