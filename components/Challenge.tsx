@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "flowbite-react/components/Button";
+import { Button } from "flowbite-react";
 import { Dropdown, DropdownDivider, DropdownItem } from "flowbite-react";
 import { Label, Radio } from "flowbite-react";
 
