@@ -14,9 +14,6 @@ importers:
       flowbite-react:
         specifier: ^0.12.13
         version: 0.12.13(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(tailwindcss@4.1.16)(typescript@5.9.3)
-      konsta:
-        specifier: ^5.0.5
-        version: 5.0.5
       meyda:
         specifier: ^5.6.3
         version: 5.6.3
@@ -48,9 +45,6 @@ importers:
       eslint-config-next:
         specifier: 16.0.0
         version: 16.0.0(@typescript-eslint/parser@8.46.2(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3))(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3)
-      flyonui:
-        specifier: ^2.4.1
-        version: 2.4.1
       tailwindcss:
         specifier: ^4
         version: 4.1.16
@@ -1313,9 +1307,6 @@ packages:
   flowbite@4.0.1:
     resolution: {integrity: sha512-UwUjvnqrQTiFm3uMJ0WWnzKXKoDyNyfyEzoNnxmZo6KyDzCedjqZw1UW0Oqdn+E0iYVdPu0fizydJN6e4pP9Rw==}
 
-  flyonui@2.4.1:
-    resolution: {integrity: sha512-WgP/YP1nZXbEtRkl3ThJIcIaisXOyON3zS2Qz2IwikQA/2X/PmqnP6E+eOz7WLBzEQI4ec7wViYAcRf9vljcbg==}
-
   for-each@0.3.5:
     resolution: {integrity: sha512-dKx12eRCVIzqCxFGplyFKJMPvLEWgmNtUrpTiJIR5u97zEhRG8ySrtboPHZXx7daLxQVrl643cTzbab2tkQjxg==}
     engines: {node: '>= 0.4'}
@@ -1602,10 +1593,6 @@ packages:
   klona@2.0.6:
     resolution: {integrity: sha512-dhG34DXATL5hSxJbIexCft8FChFXtmskoZYnoPWjXQuebWYCNkVeV3KkGegCK9CP1oswI/vQibS2GY7Em/sJJA==}
     engines: {node: '>= 8'}
-
-  konsta@5.0.5:
-    resolution: {integrity: sha512-mkygFSKYXZtQraALLM/24rtSQxf8Hbd8IUgNchztS+9gTad/VvZYn0AnBChHHxESo4zHXvt049uvdZtmfE4F9Q==}
-    engines: {node: '>= 4.7.0'}
 
   language-subtag-registry@0.3.23:
     resolution: {integrity: sha512-0K65Lea881pHotoGEa5gDlMxt3pctLi2RplBb7Ezh4rRdLEOtgi7n4EwK9lamnUCkKBqaeKRVebTq6BAxSkpXQ==}
@@ -2084,9 +2071,6 @@ packages:
 
   tailwind-merge@3.0.1:
     resolution: {integrity: sha512-AvzE8FmSoXC7nC+oU5GlQJbip2UO7tmOhOfQyOmPhrStOGXHU08j8mZEHZ4BmCqY5dWTCo4ClWkNyRNx1wpT0g==}
-
-  tailwind-merge@3.4.0:
-    resolution: {integrity: sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==}
 
   tailwindcss@4.1.16:
     resolution: {integrity: sha512-pONL5awpaQX4LN5eiv7moSiSPd/DLDzKVRJz8Q9PgzmAdd1R4307GQS2ZpfiN7ZmekdQrfhZZiSE5jkLR4WNaA==}
@@ -3601,10 +3585,6 @@ snapshots:
     transitivePeerDependencies:
       - rollup
 
-  flyonui@2.4.1:
-    dependencies:
-      '@floating-ui/dom': 1.7.4
-
   for-each@0.3.5:
     dependencies:
       is-callable: 1.2.7
@@ -3887,10 +3867,6 @@ snapshots:
       json-buffer: 3.0.1
 
   klona@2.0.6: {}
-
-  konsta@5.0.5:
-    dependencies:
-      tailwind-merge: 3.4.0
 
   language-subtag-registry@0.3.23: {}
 
@@ -4418,8 +4394,6 @@ snapshots:
   tailwind-merge@2.6.0: {}
 
   tailwind-merge@3.0.1: {}
-
-  tailwind-merge@3.4.0: {}
 
   tailwindcss@4.1.16: {}
 
