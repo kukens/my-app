@@ -14,7 +14,7 @@ export default function Track() {
            <Link key="back" className="m-5" href={`/`}> <Button as="span" color="teal" pill> ← Go Back</Button></Link> 
 
 
-        <ChordProgressionCreator />
+        <ChordProgressionCreator TrackData={null} Id={""} />
       </>
   );
 }

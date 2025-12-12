@@ -5,12 +5,10 @@ import AudioAnalyzer from '@/components/AudioAnalyzer';
 import TrackPlayer from '@/components/TrackPlayer';
 import { ChordProvider } from '@/components/ChordContext';
 import { Button } from "flowbite-react";
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Home() {
 
-  const router = useRouter();
   const params = useParams();
   const { id } = params;
 

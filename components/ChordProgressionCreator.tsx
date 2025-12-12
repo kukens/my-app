@@ -1,25 +1,43 @@
 'use client';
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TrackData, Bar } from "@/types/TrackData";
+import { Button, TextInput } from "flowbite-react";
+import { useRouter } from 'next/navigation';
 
-export default function ChordProgressionCreator() {
-  const [trackName, setTrackName] = useState("");
+interface ChordProgressionCreatorProps {
+  TrackData: TrackData | null
+  Id: string
+}
+
+export default function ChordProgressionCreator(props: ChordProgressionCreatorProps) {
+
+  const [trackName, setTrackName] = useState(props.TrackData?.name || "");
   const [beatsPerBar, setBeatsPerBar] = useState(4);
-  const [tempo, setTempo] = useState(120);
+  const [tempo, setTempo] = useState(props.TrackData?.tempo || 120);
+  const [id, setId] = useState(props.Id || crypto.randomUUID());
+  const [bars, setBars] = useState<Bar[]>(props.TrackData?.bars ||[{ chords: new Array(beatsPerBar).fill('') }]);
+  
+  const router = useRouter();
 
-  const [bars, setBars] = useState<string[][]>([["", "", "", ""]]);
   const beatsElementsRef = useRef<HTMLInputElement[]>([]);
 
-  const id = useRef(crypto.randomUUID());
+  useEffect(() => {
+    if (props.TrackData) {
+      setBars(props.TrackData.bars);
+      setTrackName(props.TrackData.name)
+      setTempo(props.TrackData.tempo)
+      setId(props.Id)
+    }
+  }, [props.TrackData]);
 
   const updateBeats = (value: number) => {
     setBeatsPerBar(value);
-    setBars((prev) => prev.map(() => Array(value).fill("")));
+    setBars((prev) => prev.map(() => { return { chords: new Array(beatsPerBar).fill('') } }));
   };
 
   const addBar = () => {
-    setBars((prev) => [...prev, Array(beatsPerBar).fill("")]);
+    setBars((prev) => [...prev, { chords: new Array(beatsPerBar).fill('') }]);
   };
 
   const saveTrack = () => {
@@ -38,19 +56,25 @@ export default function ChordProgressionCreator() {
     });
 
     const trackData: TrackData = {
-      id: id.current,
+      id: id,
       name: trackName,
       tempo: tempo,
       bars: bars,
       loop: false
     }
 
-    localStorage.setItem(`trackData-${trackData.id}`, JSON.stringify(trackData))
+    localStorage.setItem(`trackData-${trackData.id}`, JSON.stringify(trackData));
+    router.push(`/tracks/${id}`);
+  };
+
+  const deleteTrack = () => {
+    localStorage.removeItem(`trackData-${id}`);
+    router.push('/');
   };
 
   const updateChord = (barIndex: number, beatIndex: number, value: string) => {
     const updated = [...bars];
-    updated[barIndex][beatIndex] = value;
+    updated[barIndex].chords[beatIndex] = value;
     setBars(updated);
   };
 
@@ -64,75 +88,41 @@ export default function ChordProgressionCreator() {
     <div className="p-6 max-w-xl mx-auto space-y-6">
       <div className="grid grid-cols-1 gap-4">
         <div>
-          <label className="block mb-1 font-medium">Track name</label>
-          <input
-            type="text"
-            min={1}
-            value={trackName}
-            onChange={(e) => setTrackName(e.target.value)}
-            className="w-full p-2 rounded border"
-          />
+          <label className="dark:text-white">Track name</label>
+          <TextInput id="trackName" value={trackName} type="text" placeholder="Track name" required onChange={(e) => setTrackName(e.target.value)} />
         </div>
 
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block mb-1 font-medium">Beats per Bar</label>
-          <input
-            type="number"
-            min={1}
-            value={beatsPerBar}
-            onChange={(e) => updateBeats(Number(e.target.value))}
-            className="w-full p-2 rounded border"
-          />
+          <label className="dark:text-white">Beats per Bar</label>
+          <TextInput id="beatsPerBar" value={beatsPerBar} type="number" required onChange={(e) => updateBeats(Number.parseInt(e.target.value))} />
         </div>
 
         <div>
-          <label className="block mb-1 font-medium">Tempo (BPM)</label>
-          <input
-            type="number"
-            min={20}
-            max={300}
-            value={tempo}
-            onChange={(e) => setTempo(Number(e.target.value))}
-            className="w-full p-2 rounded border"
-          />
+          <label className="dark:text-white">Tempo (BPM)</label>
+          <TextInput id="tempo" value={tempo} type="number" min={20} max={300} required onChange={(e) => setTempo(Number.parseInt(e.target.value))} />
         </div>
       </div>
 
-      <button
-        onClick={addBar}
-        className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600"
-      >
-        Add Bar
-      </button>
+      <Button color="teal" pill onClick={addBar}>Add Bar</Button>
 
       <div className="space-y-6">
-        {bars.map((bar, barIndex) => (
+        {bars?.map((bar, barIndex) => (
           <div key={barIndex} className="space-y-2">
             <div className="grid grid-cols-4 gap-2">
               {Array.from({ length: beatsPerBar }).map((_, beatIndex) => (
-                <input
-                  ref={registerBeats}
-                  key={beatIndex}
-                  type="text"
-                  placeholder={`Beat ${beatIndex + 1}`}
-                  value={bars[barIndex][beatIndex] || ""}
-                  onChange={(e) => updateChord(barIndex, beatIndex, e.target.value)}
-                  className="p-2 rounded border text-center"
-                />
+                <TextInput key={beatIndex} ref={registerBeats} type="text" required
+                  value={bars[barIndex].chords[beatIndex] || ""}
+                  onChange={(e) => updateChord(barIndex, beatIndex, e.target.value)} />
               ))}
             </div>
           </div>
         ))}
       </div>
 
-      <button
-        onClick={saveTrack}
-        className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600"
-      >
-        Save track
-      </button>
+      <Button onClick={saveTrack} color="teal" pill>Save</Button>
+      <Button onClick={deleteTrack} color="teal" pill>Delete</Button>
     </div>
   );
 }
